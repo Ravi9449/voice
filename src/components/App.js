@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 
@@ -10,16 +10,31 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 
 function App() {
+
+
   const commands = [
     {
-      command: ["Go to * page", "Go to *", "Open * page", "Open *"],
+      command: ["`Go to * page", "Go to *", "Open * page", "Open *"],
       callback: (redirectPage) => setRedirectUrl(redirectPage),
     },
   ];
 
   const { transcript } = useSpeechRecognition({ commands });
   const [redirectUrl, setRedirectUrl] = useState(" ");
+  const [redirect,setredirect] = useState("")
+  const [errorpath,seterrorpath] = useState("")
+
+  useEffect(()=>{
+    // console.log("inside looper",window.location.pathname,redirect)
+    if(redirect)
+      if(window.location.pathname !== redirect){
+        window.location.href = redirect
+      }
+    // <Navigate to={redirect} />
+  },[redirect])
+
   const pages = ["dashboard", "history", "tracker"];
+  
   const urls = {
     dashboard: "/",
     history: "/history",
@@ -30,15 +45,21 @@ function App() {
     return null;
   }
 
-  let redirect = "";
+  let errortext = "";
   if (redirectUrl) {
-    console.log(redirectUrl);
-    if (pages.includes(redirectUrl)) {
-      redirect = <Navigate to={urls[redirectUrl]} />;
-    } else {
-      redirect = <p>Could not find page: {redirectUrl}</p>;
+    if(redirectUrl !== undefined && urls[redirectUrl] !== undefined){
+      if (pages.includes(redirectUrl)) {
+        if(redirect !== urls[redirectUrl])
+        setredirect(urls[redirectUrl])
+        // redirect = <Navigate to={urls[redirectUrl]} />;
+      } else {
+        seterrorpath(`Could not find page: ${redirectUrl}`);
+      }
+    }else{
+      errortext = `Could not find page: ${redirectUrl}`
     }
   }
+
 
   return (
     <div>
@@ -54,7 +75,7 @@ function App() {
           <Route path="/history" exact element={<History />} />
           <Route path="/tracker" exact element={<Tracker />} />
         </Routes>
-        {redirect}
+        {errortext}
       </BrowserRouter>
       <p id="transcript">Transcript: {transcript}</p>
       <button onClick={SpeechRecognition.startListening}>Start</button>
